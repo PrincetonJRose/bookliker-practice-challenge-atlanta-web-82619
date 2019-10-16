@@ -13,7 +13,6 @@ const EMPTY_HEART = '♡'
 const FULL_HEART = '♥'
 
 let allBooks
-let users
 
 function getData(){
     fetch(mainUrl + 'books')
@@ -21,12 +20,6 @@ function getData(){
     .then(booksData => {
         allBooks = booksData
         makeBookList(allBooks)
-    })
-
-    fetch(mainUrl + 'users')
-    .then(res => res.json())
-    .then(usersData => {
-        users = usersData
     })
 }
 
@@ -37,6 +30,7 @@ function clearNode(node) {
 }
 
 function makeBookList(books) {
+    clearNode(listDiv)
     let listName = document.createElement('h4')
     listName.classList += 'ui centered header'
     listName.textContent = 'Book List'
@@ -81,6 +75,15 @@ function displayBook(book) {
     let description = document.createElement('p')
     description.textContent = book.description
 
+    let likeBtn = document.createElement('button')
+    likeBtn.classList += 'ui negative basic button'
+    let userLiked = checkIfUserLiked(book)
+    if (userLiked)
+        likeBtn.textContent = `Liked! ${FULL_HEART}`
+    else
+        likeBtn.textContent = `Like ${EMPTY_HEART}`
+    likeBtn.addEventListener('click', (e)=> toggleLike(book))
+
     let listName = document.createElement('div')
     listName.classList += 'header'
     listName.innerHTML = '<u>Users who have like this book:</u>'
@@ -100,7 +103,6 @@ function displayBook(book) {
         content.classList += 'content'
         content.textContent = user.username
         itemDiv.appendChild(content)
-        
     })
     
     let br = document.createElement('br')
@@ -111,8 +113,9 @@ function displayBook(book) {
     segment.appendChild(image)
     segment.appendChild(br)
     segment.appendChild(description)
+    segment.appendChild(likeBtn)
     segment.appendChild(br2)
-    segment.appendChild(br3)-
+    segment.appendChild(br3)
     segment.appendChild(listName)
     segment.appendChild(userList)
 
@@ -120,4 +123,50 @@ function displayBook(book) {
 
 }
 
+function checkIfUserLiked(book){
+    let liked = false
+    book.users.map( user => {
+        if (user.id === 1)
+            liked = true
+    })
+    return liked
+}
+
+function toggleLike(book){
+    if (checkIfUserLiked(book)){
+        let users = book.users.filter( user => {
+            if (user.id !== 1)
+                return user
+        })
+        book.users = users
+    } else {
+        let me = {}
+        me.id = 1
+        me.username = 'pouros'
+        book.users.push(me)
+    }
+    fetch(mainUrl + `books/${book.id}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            users: book.users
+        })
+    })
+    .then(res => res.json())
+    .then(bookData => {
+        debugger
+        allBooks = allBooks.map( book => {
+            if (book.id === bookData.id)
+                return bookData
+            else
+                return book
+        })
+        displayBook(bookData)
+
+    })
+    .catch(errors => console.log(errors))
+}
 getData()
