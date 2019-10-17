@@ -29,98 +29,154 @@ function clearNode(node) {
     }
 }
 
+function newElement({ type, classes, textContent, parentElement, id, innerHTML, innerText, clearParent, source  }) {
+    let element = document.createElement(type)
+    if (type === 'img' && source)
+        element.src = source
+    if (classes && typeof classes === 'string')
+    element.classList += classes
+    if (classes && typeof classes === 'object')
+        classes.forEach( cls => {
+            element.classList += cls
+        })
+    if (textContent)
+    element.textContent = textContent
+    if (id)
+    element.id = id
+    if (parentElement)
+        if (clearParent)
+            clearNode(parentElement)
+        parentElement.appendChild(element)
+    if (innerHTML)
+    element.innerHTML = innerHTML
+    if (innerText)
+    element.innerText = innerText
+    return element
+}
+
 function makeBookList(books) {
-    clearNode(listDiv)
-    let listName = document.createElement('h4')
-    listName.classList += 'ui centered header'
-    listName.textContent = 'Book List'
-    listDiv.appendChild(listName)
+    let listName = newElement({
+        type: 'h4',
+        classes: 'ui centered header',
+        textContent: 'Book List',
+        parentElement: listDiv,
+        clearParent: true,
+        id: 'list-name'
+    })
 
     books.forEach(book => {
-        let itemDiv = document.createElement('div')
-        itemDiv.classList += 'item'
-        itemDiv.dataset.bookId = book.id
+        let itemDiv = newElement({
+            type: 'div',
+            classes: 'item',
+            id: book.id,
+            parentElement: listDiv
+        })
         itemDiv.addEventListener('click', (e)=> {
             displayBook(book)
         })
 
-        let icon = document.createElement('i')
-        icon.classList += 'book icon'
-        itemDiv.appendChild(icon)
+        let icon = newElement({
+            type: 'i',
+            classes: 'book icon',
+            parentElement: itemDiv
+        })
         
-        let content = document.createElement('div')
-        content.classList += 'content'
-        content.textContent = book.title
-        itemDiv.appendChild(content)
-
-        listDiv.appendChild(itemDiv)
-
+        let content = newElement({
+            type: 'div',
+            classes: 'content',
+            textContent: book.title,
+            parentElement: itemDiv
+        })
     })
 }
 
 function displayBook(book) {
-    clearNode(showPanel)
-    let segment = document.createElement('div')
-    segment.classList += 'ui raised segment container'
+    let segment = newElement({
+        type: 'div',
+        classes: 'ui raised segment container',
+        parentElement: showPanel,
+        clearParent: true
+    })
     segment.style.height = '100vh'
 
-    let title = document.createElement('h1')
-    title.classList += 'ui centered header'
-    title.textContent = book.title
+    let title = newElement({
+        type: 'h1',
+        classes: 'ui centered header',
+        textContent: book.title,
+        parentElement: segment
+    })
 
-    let image = document.createElement('img')
-    image.classList += 'ui rounded small centered image'
-    image.src = book.img_url
+    let image = newElement({
+        type: 'img',
+        source: book.img_url,
+        classes: 'ui rounded small centered image',
+        parentElement: segment
+    })
 
-    let description = document.createElement('p')
-    description.textContent = book.description
+    let br = newElement({
+        type: 'br',
+        parentElement: segment
+    })
 
-    let likeBtn = document.createElement('button')
-    likeBtn.classList += 'ui negative basic button'
-    let userLiked = checkIfUserLiked(book)
-    if (userLiked)
+    let description = newElement({
+        type: 'p',
+        textContent: book.description,
+        parentElement: segment
+    })
+
+    let likeBtn = newElement({
+        type: 'button',
+        classes: 'ui negative basic button',
+        parentElement: segment
+    })
+    if (checkIfUserLiked(book))
         likeBtn.textContent = `Liked! ${FULL_HEART}`
     else
         likeBtn.textContent = `Like ${EMPTY_HEART}`
     likeBtn.addEventListener('click', (e)=> toggleLike(book))
 
-    let listName = document.createElement('div')
-    listName.classList += 'header'
-    listName.innerHTML = '<u>Users who have like this book:</u>'
-    
-    let userList = document.createElement('div')
-    userList.classList += 'ui list'
-    book.users.map( user => {
-        let itemDiv = document.createElement('div')
-        itemDiv.classList += 'item'
-        userList.appendChild(itemDiv)
-        
-        let icon = document.createElement('i')
-        icon.classList += 'user icon'
-        itemDiv.appendChild(icon)
-        
-        let content = document.createElement('div')
-        content.classList += 'content'
-        content.textContent = user.username
-        itemDiv.appendChild(content)
+    let br2 = newElement({
+        type: 'br',
+        parentElement: segment
+    })
+    let br3 = newElement({
+        type: 'br',
+        parentElement: segment
+    })
+
+    let listName = newElement({
+        type: 'div',
+        classes: 'header',
+        innerHTML: '<u>Users who have like this book:</u>',
+        parentElement: segment
     })
     
-    let br = document.createElement('br')
-    let br2 = document.createElement('br')
-    let br3 = document.createElement('br')
-    
-    segment.appendChild(title)
-    segment.appendChild(image)
-    segment.appendChild(br)
-    segment.appendChild(description)
-    segment.appendChild(likeBtn)
-    segment.appendChild(br2)
-    segment.appendChild(br3)
-    segment.appendChild(listName)
-    segment.appendChild(userList)
+    let userList = newElement({
+        type: 'div',
+        classes: 'ui list',
+        parentElement: segment
+    })
 
-    showPanel.appendChild(segment)
+    book.users.map( user => {
+        let itemDiv = newElement({
+            type: 'div',
+            classes: 'item',
+            parentElement: userList
+        })
+        
+        let icon = newElement({
+            type: 'i',
+            classes: 'user icon',
+            parentElement: itemDiv
+        })
 
+        let content = newElement({
+            type: 'div',
+            classes: 'content',
+            textContent: user.username,
+            parentElement: itemDiv
+        })
+    })
 }
 
 function checkIfUserLiked(book){
@@ -140,10 +196,7 @@ function toggleLike(book){
         })
         book.users = users
     } else {
-        let me = {}
-        me.id = 1
-        me.username = 'pouros'
-        book.users.push(me)
+        book.users.push({ id: 1, username: 'pouros' })
     }
     fetch(mainUrl + `books/${book.id}`, {
         method: 'PATCH',
@@ -157,7 +210,6 @@ function toggleLike(book){
     })
     .then(res => res.json())
     .then(bookData => {
-        debugger
         allBooks = allBooks.map( book => {
             if (book.id === bookData.id)
                 return bookData
@@ -165,8 +217,8 @@ function toggleLike(book){
                 return book
         })
         displayBook(bookData)
-
     })
     .catch(errors => console.log(errors))
 }
+
 getData()
